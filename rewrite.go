@@ -30,14 +30,14 @@ func parseRewrite(jv *json.Value) string {
 	return ""
 }
 
-func appendRewriteJSON(parent *json.Object, s string) {
-	if s == "" {
+func appendRewriteJSON(parent *json.Object, name, value string) {
+	if value == "" {
 		return
 	}
 
 	for _, v := range validRewrites() {
-		if v == s {
-			parent.Add("fuzzy_rewrite", s)
+		if v == value {
+			parent.Add(name, value)
 			return
 		}
 	}

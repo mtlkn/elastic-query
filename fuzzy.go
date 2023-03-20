@@ -1,94 +1,101 @@
 package elasticquery
 
-import (
-	"fmt"
+import "github.com/mtlkn/json"
 
-	"github.com/mtlkn/json"
-)
-
-type Fuzziness struct {
-	Value          any
-	PrefixLength   int    // prefix_length
-	Transpositions bool   // fuzzy_transpositions
-	Rewrite        string // fuzzy_rewrite
+type FuzzyQuery struct {
+	Field         string
+	Value         string
+	Boost         float64
+	Fuzziness     *Fuzziness
+	MaxExpansions int // max_expansions
 }
 
-func Fuzzy[T ~string | ~int](value T) *Fuzziness {
-	return &Fuzziness{
-		Value:          value,
-		Transpositions: true,
+func Fuzzy(field, value string) *FuzzyQuery {
+	return &FuzzyQuery{
+		Field: field,
+		Value: value,
 	}
 }
 
-func FuzzyLevenshtein(value int) *Fuzziness {
-	return Fuzzy(value)
+func (q *FuzzyQuery) SetBoost(v float64) *FuzzyQuery {
+	q.Boost = v
+	return q
 }
 
-func FuzzyAuto(low, high int) *Fuzziness {
-	if low == 0 && high == 0 {
-		return Fuzzy("AUTO")
-	}
-
-	return Fuzzy(fmt.Sprintf("AUTO:%d,%d", low, high))
+func (q *FuzzyQuery) SetFuzziness(v *Fuzziness) *FuzzyQuery {
+	q.Fuzziness = v
+	return q
 }
 
-func (fuzzy *Fuzziness) SetPrefixLength(v int) *Fuzziness {
-	fuzzy.PrefixLength = v
-	return fuzzy
+func (q *FuzzyQuery) SetMaxExpansions(v int) *FuzzyQuery {
+	q.MaxExpansions = v
+	return q
 }
 
-func (fuzzy *Fuzziness) SetTranspositions(v bool) *Fuzziness {
-	fuzzy.Transpositions = v
-	return fuzzy
-}
-
-func (fuzzy *Fuzziness) SetRewrite(v string) *Fuzziness {
-	fuzzy.Rewrite = v
-	return fuzzy
-}
-
-func (fuzzy *Fuzziness) appendJSON(parent *json.Object) {
-	if fuzzy == nil || fuzzy.Value == nil || parent == nil {
-		return
-	}
-
-	parent.Add("fuzziness", fuzzy.Value)
-
-	if fuzzy.PrefixLength > 0 {
-		parent.Add("prefix_length", fuzzy.PrefixLength)
-	}
-
-	if !fuzzy.Transpositions {
-		parent.Add("fuzzy_transpositions", false)
-	}
-
-	appendRewriteJSON(parent, fuzzy.Rewrite)
-}
-
-func parseFuzziness(jo *json.Object) *Fuzziness {
-	if jo == nil || len(jo.Properties) == 0 {
+func (q *FuzzyQuery) JSON() *json.Object {
+	if q.Field == "" || q.Value == "" {
 		return nil
 	}
 
-	fuzzy := &Fuzziness{
-		Transpositions: true,
+	jo := json.New().Add("value", q.Value)
+
+	if q.Boost > 0 {
+		jo.Add("boost", q.Boost)
 	}
 
-	for _, jp := range jo.Properties {
-		switch jp.Name {
-		case "fuzziness":
-			fuzzy.Value, _ = jp.Value.GetValue()
-		case "prefix_length":
-			fuzzy.PrefixLength, _ = jp.Value.GetInt()
-		case "fuzzy_transpositions":
-			b, ok := jp.Value.GetBool()
-			if ok && !b {
-				fuzzy.Transpositions = false
-			}
-		case "fuzzy_rewrite":
-			fuzzy.Rewrite = parseRewrite(jp.Value)
+	if q.MaxExpansions > 0 {
+		jo.Add("max_expansions", q.MaxExpansions)
+	}
+
+	q.Fuzziness.appendJSON(jo, "")
+
+	return json.New().Add("fuzzy", json.New().Add(q.Field, jo))
+}
+
+func parseFuzzy(jo *json.Object) (*FuzzyQuery, bool) {
+	if jo == nil || len(jo.Properties) != 1 {
+		return nil, false
+	}
+
+	jp := jo.Properties[0]
+
+	q := &FuzzyQuery{
+		Field: jp.Name,
+	}
+
+	if jp.Value.Type == json.STRING {
+		q.Value, _ = jp.Value.GetString()
+		return q, true
+	}
+
+	var fz *json.Object
+
+	if jp.Value.Type == json.OBJECT {
+		o, ok := jp.Value.GetObject()
+		if !ok || o == nil || len(o.Properties) == 0 {
+			return nil, false
 		}
+
+		for _, p := range o.Properties {
+			switch p.Name {
+			case "value":
+				q.Value, _ = p.Value.GetString()
+			case "boost":
+				q.Boost, _ = p.Value.GetFloat()
+			case "max_expansions":
+				q.MaxExpansions, _ = p.Value.GetInt()
+			case "fuzziness", "prefix_length", "transpositions", "rewrite":
+				if fz == nil {
+					fz = json.New()
+				}
+				fz.Properties = append(fz.Properties, p)
+			}
+		}
+
+		q.Fuzziness = parseFuzziness(fz)
+
+		return q, true
 	}
 
-	return fuzzy
+	return nil, false
 }

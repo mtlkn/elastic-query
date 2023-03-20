@@ -1,0 +1,14 @@
+@es=http://proteus-qa-uno-esdata.aptechlab.com:9200
+
+###
+POST {{es}}/appl-thirty/_search 
+Content-Type: application/json
+
+{
+  "query": {
+    "ids" : {
+      "values" : "3abc116002184d90bc98c6656016fea8",
+      "boost":20
+    }
+  }
+}

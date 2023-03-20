@@ -34,19 +34,19 @@ func TestRewrite(t *testing.T) {
 		}
 
 		jo = json.New()
-		appendRewriteJSON(jo, REWRITE_TOP_TERMS_N)
+		appendRewriteJSON(jo, "fuzzy_rewrite", REWRITE_TOP_TERMS_N)
 		if s, _ := jo.GetString("fuzzy_rewrite"); s != REWRITE_TOP_TERMS_N {
 			t.Fail()
 		}
 
 		jo = json.New()
-		appendRewriteJSON(jo, "")
+		appendRewriteJSON(jo, "rewrite", "")
 		if len(jo.Properties) > 0 {
 			t.Fail()
 		}
 
 		jo = json.New()
-		appendRewriteJSON(jo, "xyz")
+		appendRewriteJSON(jo, "rewrite", "xyz")
 		if len(jo.Properties) > 0 {
 			t.Fail()
 		}

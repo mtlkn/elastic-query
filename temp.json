@@ -1,17 +1,10 @@
 {
-  "message": {
-    "query": "this is a test",
-    "analyzer": "test",
+  "date": {
+    "gte": "now-30d",
+    "lte": "now",
     "boost": 1.2,
-    "operator": "and",
-    "minimum_should_match": 2,
-    "auto_generate_synonyms_phrase_query": false,
-    "zero_terms_query": "all",
-    "fuzziness": "AUTO",
-    "max_expansions": 60,
-    "prefix_length": 1,
-    "fuzzy_transpositions": false,
-    "fuzzy_rewrite": "top_terms_N",
-    "lenient": true
+    "format": "yyyy-MM-dd",
+    "time_zone": "+01:00",
+    "relation": "CONTAINS"
   }
 }

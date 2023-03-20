@@ -1,0 +1,284 @@
+{
+  "match": [
+    {
+      "match": {
+        "message": {
+          "query": "this is a test"
+        }
+      }
+    },
+    {}
+  ],
+  "match1": [
+    {
+      "match": {
+        "message": "this is a test"
+      }
+    },
+    { "match": { "message": { "query": "this is a test" } } }
+  ],
+  "match2": [
+    {
+      "match": {
+        "message": {
+          "query": "this is a test",
+          "operator": "and"
+        }
+      }
+    },
+    {}
+  ],
+  "match3": [
+    {
+      "match": {
+        "message": {
+          "query": "this is a testt",
+          "fuzziness": "AUTO"
+        }
+      }
+    },
+    {}
+  ],
+  "match4": [
+    {
+      "match": {
+        "message": {
+          "query": "to be or not to be",
+          "operator": "and",
+          "zero_terms_query": "all"
+        }
+      }
+    },
+    {}
+  ],
+  "match5": [
+    {
+      "match": {
+        "message": {
+          "query": "ny city",
+          "auto_generate_synonyms_phrase_query": false
+        }
+      }
+    },
+    {}
+  ],
+  "match_bool_prefix": [
+    {
+      "match_bool_prefix": {
+        "message": "quick brown f"
+      }
+    },
+    { "match_bool_prefix": { "message": { "query": "quick brown f" } } }
+  ],
+  "match_bool_prefix2": [
+    {
+      "match_bool_prefix": {
+        "message": {
+          "query": "quick brown f",
+          "analyzer": "keyword"
+        }
+      }
+    },
+    {}
+  ],
+  "match_phrase": [
+    {
+      "match_phrase": {
+        "message": "this is a test"
+      }
+    },
+    { "match_phrase": { "message": { "query": "this is a test" } } }
+  ],
+  "match_phrase2": [
+    {
+      "match_phrase": {
+        "message": {
+          "query": "this is a test",
+          "analyzer": "my_analyzer"
+        }
+      }
+    },
+    {}
+  ],
+  "match_phrase_prefix": [
+    {
+      "match_phrase_prefix": {
+        "message": {
+          "query": "quick brown f"
+        }
+      }
+    },
+    {}
+  ],
+  "exists": [
+    {
+      "exists": {
+        "field": "user"
+      }
+    },
+    {}
+  ],
+  "prefix": [
+    {
+      "prefix": {
+        "user.id": {
+          "value": "ki"
+        }
+      }
+    },
+    {}
+  ],
+  "prefix2": [
+    {
+      "prefix": { "user": "ki" }
+    },
+    { "prefix": { "user": { "value": "ki" } } }
+  ],
+  "term": [
+    {
+      "term": {
+        "user.id": {
+          "value": "kimchy",
+          "boost": 1.2
+        }
+      }
+    },
+    {}
+  ],
+  "terms": [
+    {
+      "terms": {
+        "user.id": ["kimchy", "elkbee"],
+        "boost": 1.2
+      }
+    },
+    {}
+  ],
+  "wildcard": [
+    {
+      "wildcard": {
+        "user.id": {
+          "value": "ki*y",
+          "boost": 1.2,
+          "rewrite": "constant_score"
+        }
+      }
+    },
+    {}
+  ],
+  "range": [
+    {
+      "range": {
+        "age": {
+          "gte": 10,
+          "lte": 20,
+          "boost": 1.2
+        }
+      }
+    },
+    {}
+  ],
+  "range1": [
+    {
+      "range": {
+        "timestamp": {
+          "gte": "now-1d/d",
+          "lt": "now/d"
+        }
+      }
+    },
+    {}
+  ],
+  "range2": [
+    {
+      "range": {
+        "timestamp": {
+          "gte": "2020-01-01T00:00:00",
+          "lte": "now",
+          "time_zone": "+01:00"
+        }
+      }
+    },
+    {}
+  ],
+  "bool": [
+    {
+      "bool": {
+        "must": {
+          "term": { "user.id": "kimchy" }
+        },
+        "filter": {
+          "term": { "tags": "production" }
+        },
+        "must_not": {
+          "range": {
+            "age": { "gte": 10, "lte": 20 }
+          }
+        },
+        "should": [
+          { "term": { "tags": "env1" } },
+          { "term": { "tags": "deployed" } }
+        ],
+        "boost": 1.2,
+        "minimum_should_match": 1
+      }
+    },
+    {
+      "bool": {
+        "must": { "term": { "user.id": { "value": "kimchy" } } },
+        "filter": { "term": { "tags": { "value": "production" } } },
+        "must_not": { "range": { "age": { "gte": 10, "lte": 20 } } },
+        "should": [
+          { "term": { "tags": { "value": "env1" } } },
+          { "term": { "tags": { "value": "deployed" } } }
+        ],
+        "boost": 1.2,
+        "minimum_should_match": 1
+      }
+    }
+  ],
+  "fuzzy": [
+    {
+      "fuzzy": {
+        "user.id": {
+          "value": "ki"
+        }
+      }
+    },
+    {}
+  ],
+  "fuzzy2": [
+    {
+      "fuzzy": {
+        "user.id": {
+          "value": "ki",
+          "fuzziness": "AUTO",
+          "max_expansions": 50,
+          "prefix_length": 1,
+          "transpositions": false,
+          "rewrite": "constant_score"
+        }
+      }
+    },
+    {
+      "fuzzy": {
+        "user.id": {
+          "value": "ki",
+          "max_expansions": 50,
+          "fuzziness": "AUTO",
+          "prefix_length": 1,
+          "transpositions": false,
+          "rewrite": "constant_score"
+        }
+      }
+    }
+  ],
+  "ids": [
+    {
+      "ids": {
+        "values": ["1", "4", "100"]
+      }
+    },
+    {}
+  ]
+}

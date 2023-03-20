@@ -126,56 +126,47 @@ func (q *MatchQuery) JSON() *json.Object {
 		name = "match_bool_prefix"
 	}
 
-	query := json.New()
+	jo := json.New().Add("query", q.Query)
 
-	and := q.IsAnd && !q.IsPhrase
-	if and || q.Boost > 0 || (q.Slop > 0 && q.IsPhrase) {
-		jo := json.New().Add("query", q.Query)
-
-		if q.Boost > 0 {
-			jo.Add("boost", q.Boost)
-		}
-
-		if q.Analyzer != "" {
-			jo.Add("analyzer", q.Analyzer)
-		}
-
-		if q.MinMatch != nil {
-			jo.Add("minimum_should_match", q.MinMatch)
-		}
-
-		if and {
-			jo.Add("operator", "and")
-		}
-
-		if q.Slop > 0 && q.IsPhrase {
-			jo.Add("slop", q.Slop)
-		}
-
-		if q.IsZeroTerms {
-			jo.Add("zero_terms_query", "all")
-		}
-
-		if !q.IsSynonyms {
-			jo.Add("auto_generate_synonyms_phrase_query", false)
-		}
-
-		if q.MaxExpansions > 0 {
-			jo.Add("max_expansions", q.MaxExpansions)
-		}
-
-		q.Fuzziness.appendJSON(jo)
-
-		if q.Lenient {
-			jo.Add("lenient", true)
-		}
-
-		query.Add(q.Field, jo)
-	} else {
-		query.Add(q.Field, q.Query)
+	if q.Boost > 0 {
+		jo.Add("boost", q.Boost)
 	}
 
-	return json.New().Add(name, query)
+	if q.Analyzer != "" {
+		jo.Add("analyzer", q.Analyzer)
+	}
+
+	if q.MinMatch != nil {
+		jo.Add("minimum_should_match", q.MinMatch)
+	}
+
+	if q.IsAnd && !q.IsPhrase {
+		jo.Add("operator", "and")
+	}
+
+	if q.Slop > 0 && q.IsPhrase {
+		jo.Add("slop", q.Slop)
+	}
+
+	if q.IsZeroTerms {
+		jo.Add("zero_terms_query", "all")
+	}
+
+	if !q.IsSynonyms {
+		jo.Add("auto_generate_synonyms_phrase_query", false)
+	}
+
+	if q.MaxExpansions > 0 {
+		jo.Add("max_expansions", q.MaxExpansions)
+	}
+
+	q.Fuzziness.appendJSON(jo, "fuzzy_")
+
+	if q.Lenient {
+		jo.Add("lenient", true)
+	}
+
+	return json.New().Add(name, json.New().Add(q.Field, jo))
 }
 
 func parseMatch(name string, jo *json.Object) (*MatchQuery, bool) {
@@ -212,12 +203,12 @@ func parseMatch(name string, jo *json.Object) (*MatchQuery, bool) {
 	var fz *json.Object
 
 	if jp.Value.Type == json.OBJECT {
-		jo, ok := jp.Value.GetObject()
-		if !ok || jo == nil || len(jo.Properties) == 0 {
+		o, ok := jp.Value.GetObject()
+		if !ok || o == nil || len(o.Properties) == 0 {
 			return nil, false
 		}
 
-		for _, p := range jo.Properties {
+		for _, p := range o.Properties {
 			switch p.Name {
 			case "query":
 				q.Query, _ = p.Value.GetString()
